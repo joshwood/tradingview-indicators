@@ -1,0 +1,95 @@
+//@version=5
+indicator('TripleSupertrend-v1', overlay=true, format=format.price, precision=2, timeframe='')
+
+my_supertrend(src, Periods, Multiplier, changeATR) =>
+    atr2 = ta.sma(ta.tr, Periods)
+    atr = changeATR ? ta.atr(Periods) : atr2
+    up = src - Multiplier * atr
+    up1 = nz(up[1], up)
+    up := close[1] > up1 ? math.max(up, up1) : up
+    dn = src + Multiplier * atr
+    dn1 = nz(dn[1], dn)
+    dn := close[1] < dn1 ? math.min(dn, dn1) : dn
+    trend = 1
+    trend := nz(trend[1], trend)
+    trend := trend == -1 and close > dn1 ? 1 : trend == 1 and close < up1 ? -1 : trend
+    [up, dn, trend]
+
+// User input settings
+Multiplier_short = input.float(title='ATR Multiplier Short', step=0.1, defval=1.2, group="SuperTrend Short", inline="SuperTrend Short")
+
+Multiplier_medium = input.float(title='ATR Multiplier Medium', step=0.1, defval=3.0, group="SuperTrend Medium", inline="SuperTrend Medium")
+
+Multiplier_long = input.float(title='ATR Multiplier Long', step=0.1, defval=10.0, group="SuperTrend Long", inline="SuperTrend Long")
+
+
+Periods = input(title='ATR Period', defval=10)
+src = input(hl2, title='Source')
+changeATR = input(title='Change ATR Calculation Method ?', defval=true)
+showsignals = input(title='Show Buy/Sell Signals ?', defval=true)
+highlighting = input(title='Highlighter On/Off ?', defval=true)
+
+///////////////////////////// SHORT
+
+// Calculate the Supertrend Short levels and trend
+[up_s, dn_s, trend_s] = my_supertrend(src, Periods, Multiplier_short, changeATR)
+
+// Plotting and signals code (outside the function scope)
+upPlot_s = plot(trend_s == 1 ? up_s : na, title="Short-Up Trend", style=plot.style_linebr, linewidth=2, color=color.green, display=display.none)
+dnPlot_s = plot(trend_s == 1 ? na : dn_s, title="Short-Down Trend", style=plot.style_linebr, linewidth=2, color=color.red, display=display.none)
+
+buySignal_s = trend_s == 1 and trend_s[1] == -1
+sellSignal_s = trend_s == -1 and trend_s[1] == 1
+
+plotshape(buySignal_s and showsignals ? up_s : na, title='Short-Buy', text='Buy', location=location.absolute, style=shape.labelup, size=size.tiny, color=color.new(color.green, 0), textcolor=color.new(color.white, 0))
+plotshape(sellSignal_s and showsignals ? dn_s : na, title='Short-Sell', text='Sell', location=location.absolute, style=shape.labeldown, size=size.tiny, color=color.new(color.red, 0), textcolor=color.new(color.white, 0))
+
+// Highlighting functionality
+mPlot_s = plot(ohlc4, title="", style=plot.style_circles, linewidth=0)
+longFillColor_s = highlighting ? (trend_s == 1 ? color.green : color.white) : color.white
+shortFillColor_s = highlighting ? (trend_s == -1 ? color.red : color.white) : color.white
+fill(mPlot_s, upPlot_s, title="Short-UpTrend Highligter", color=longFillColor_s, display=display.none)
+fill(mPlot_s, dnPlot_s, title="Short-DownTrend Highligter", color=shortFillColor_s, display=display.none)
+
+///////////////////////////// MEDIUM
+
+// Calculate the Supertrend Short levels and trend
+[up_m, dn_m, trend_m] = my_supertrend(src, Periods, Multiplier_medium, changeATR)
+
+// Plotting and signals code (outside the function scope)
+upPlot_m = plot(trend_m == 1 ? up_m : na, title='Medium-Up Trend', style=plot.style_linebr, linewidth=2, color=color.new(color.green, 0))
+dnPlot_m = plot(trend_m == 1 ? na : dn_m, title='Medium-Down Trend', style=plot.style_linebr, linewidth=2, color=color.new(color.red, 0))
+buySignal_m = trend_m == 1 and trend_m[1] == -1
+sellSignal_m = trend_m == -1 and trend_m[1] == 1
+plotshape(buySignal_m and showsignals ? up_m : na, title="Medium-Buy", text="Buy", location=location.absolute, style=shape.labelup, size=size.tiny, color=color.green, textcolor=color.white, transp=0, display=display.none)
+plotshape(sellSignal_m and showsignals ? dn_m : na, title="Medium-Sell", text="Sell", location=location.absolute, style=shape.labeldown, size=size.tiny, color=color.red, textcolor=color.white, transp=0, display=display.none)
+
+// Highlighting functionality
+mPlot_m = plot(ohlc4, title='', style=plot.style_circles, linewidth=0)
+longFillColor_m = highlighting ? trend_m == 1 ? color.green : color.white : color.white
+shortFillColor_m = highlighting ? trend_m == -1 ? color.red : color.white : color.white
+fill(mPlot_m, upPlot_m, title='Medium-UpTrend Highligter', color=longFillColor_m, transp=90)
+fill(mPlot_m, dnPlot_m, title='Medium-DownTrend Highligter', color=shortFillColor_m, transp=90)
+
+
+//////////////////////////////// LONG
+
+// Calculate the Supertrend Short levels and trend
+[up_l, dn_l, trend_l] = my_supertrend(src, Periods, Multiplier_long, changeATR)
+
+// Plotting and signals code (outside the function scope)
+upPlot_l = plot(trend_l == 1 ? up_l : na, title='Long-Up Trend', style=plot.style_linebr, linewidth=2, color=color.new(color.green, 0))
+dnPlot_l = plot(trend_l == 1 ? na : dn_l, title='Long-Down Trend', style=plot.style_linebr, linewidth=2, color=color.new(color.red, 0))
+buySignal_l = trend_l == 1 and trend_l[1] == -1
+sellSignal_l = trend_l == -1 and trend_l[1] == 1
+plotshape(buySignal_l and showsignals ? up_l : na, title="Long-Buy", text="Buy", location=location.absolute, style=shape.labelup, size=size.tiny, color=color.green, textcolor=color.white, transp=0, display=display.none)
+plotshape(sellSignal_l and showsignals ? dn_l : na, title="Long-Sell", text="Sell", location=location.absolute, style=shape.labeldown, size=size.tiny, color=color.red, textcolor=color.white, transp=0, display=display.none)
+
+// Highlighting functionality
+mPlot_l = plot(ohlc4, title='', style=plot.style_circles, linewidth=0)
+longFillColor_l = highlighting ? trend_l == 1 ? color.green : color.white : color.white
+shortFillColor_l = highlighting ? trend_l == -1 ? color.red : color.white : color.white
+fill(mPlot_l, upPlot_l, title='Long-UpTrend Highligter', color=longFillColor_l, transp=90)
+fill(mPlot_l, dnPlot_l, title='Long-DownTrend Highligter', color=shortFillColor_l, transp=90)
+
+
