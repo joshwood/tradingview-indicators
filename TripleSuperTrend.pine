@@ -1,5 +1,5 @@
 //@version=5
-indicator('TripleSupertrend-v1', overlay=true, format=format.price, precision=2, timeframe='')
+indicator('TripleSupertrend-v2', overlay=true, format=format.price, precision=2, timeframe='')
 
 my_supertrend(src, Periods, Multiplier, changeATR) =>
     atr2 = ta.sma(ta.tr, Periods)
